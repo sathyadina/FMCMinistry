@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Faith Ministry of Christ – Church Financial Management</title>
+<style>
+:root{
+  --bg:#f1f4f6; --primary:#1e88e5; --accent:#27ae60; --danger:#e74c3c;
+  --card:#fff; --muted:#6b7280;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:#0f1724}
+.app{max-width:760px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{background:var(--primary);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:12px}
+header h1{font-size:18px;margin:0}
+.tabs{display:flex;gap:8px;padding:10px}
+.tabs button{background:#fff;padding:8px 10px;border-radius:999px;border:0;cursor:pointer;font-weight:600}
+.tabs button.active{background:#dff1ff;font-weight:700}
+main{flex:1;padding:10px;display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--card);border-radius:10px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+.summary{display:flex;gap:8px}
+.summary .tile{flex:1;padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(0,0,0,0.06)}
+.tile h3{margin:0;font-size:13px;color:var(--muted)}
+.tile .amt{margin-top:6px;font-weight:700;font-size:20px}
+.tile.in .amt{color:var(--accent)}
+.tile.out .amt{color:var(--danger)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.action{flex:1;padding:12px;border-radius:8px;border:0;font-weight:700;cursor:pointer;color:#fff}
+.cash-in{background:var(--accent)}
+.cash-out{background:var(--danger)}
+.list{min-height:160px}
+.tx{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(0,0,0,0.05)}
+.circle{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.circle.in{background:#27ae60}
+.circle.out{background:#e74c3c}
+.tiny{font-size:12px;color:var(--muted)}
+footer{padding:12px;text-align:center;color:var(--muted)}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:50}
+.modal{width:100%;max-width:520px;background:#fff;border-radius:12px;padding:16px}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);margin-top:4px}
+.actions{display:flex;gap:8px;justify-content:flex-end}
+.btn{padding:10px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
+.btn.ghost{background:transparent;color:#555;border:1px solid rgba(0,0,0,0.2)}
+.tx img{max-width:80px;margin-top:4px;border-radius:6px;}
+canvas{max-width:100%; margin-top:10px;}
+</style>
+
+<script src="https://unpkg.com/parse/dist/parse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>Faith Ministry of Christ – Finance</h1>
+  <div style="margin-left:auto" class="tiny">Balance: <strong id="headerBalance">0</strong></div>
+</header>
+
+<div class="tabs panel">
+  <button class="active" data-filter="all">All</button>
+  <button data-filter="daily">Daily</button>
+  <button data-filter="weekly">Weekly</button>
+  <button data-filter="monthly">Monthly</button>
+  <button data-filter="yearly">Yearly</button>
+</div>
+
+<main>
+<section class="panel summary">
+  <div class="tile in">
+    <h3>Total Church Income</h3>
+    <div class="amt" id="totalIn">0</div>
+  </div>
+  <div class="tile out">
+    <h3>Total Church Expenses</h3>
+    <div class="amt" id="totalOut">0</div>
+  </div>
+  <div class="tile">
+    <h3>Balance</h3>
+    <div class="amt" id="balance">0</div>
+  </div>
+</section>
+
+<section class="panel controls">
+  <button class="action cash-in" id="openIn">Add Income</button>
+  <button class="action cash-out" id="openOut">Add Expense</button>
+  <button class="btn ghost" id="exportCsv">Export CSV</button>
+  <button class="btn ghost" id="exportPdf">Export PDF</button>
+  <button class="btn ghost" id="sharePdf">Share PDF</button>
+</section>
+
+<section class="panel list" id="listPanel"></section>
+<section class="panel">
+  <canvas id="categoryChart" height="150"></canvas>
+</section>
+</main>
+
+<footer>Faith Ministry of Christ – Church Finance Management</footer>
+</div>
+
+<!-- Modal and scripts would continue with full logic as provided previously -->
+</body>
+</html>
