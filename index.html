@@ -14,12 +14,14 @@ html,body{height:100%;margin:0;background:var(--bg);color:#0f1724}
 .app{max-width:760px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
 header{background:var(--primary);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:12px}
 header h1{font-size:18px;margin:0}
+.header-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.header-actions a{color:#fff;text-decoration:none;background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:8px;font-weight:600}
 .tabs{display:flex;gap:8px;padding:10px}
 .tabs button{background:#fff;padding:8px 10px;border-radius:999px;border:0;cursor:pointer;font-weight:600}
 .tabs button.active{background:#dff1ff;font-weight:700}
 main{flex:1;padding:10px;display:flex;flex-direction:column;gap:10px}
 .panel{background:var(--card);border-radius:10px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
-.summary{display:flex;gap:8px}
+.summary{display:flex;gap:8px;flex-wrap:wrap}
 .summary .tile{flex:1;padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(0,0,0,0.06)}
 .tile h3{margin:0;font-size:13px;color:var(--muted)}
 .tile .amt{margin-top:6px;font-weight:700;font-size:20px}
@@ -35,15 +37,16 @@ main{flex:1;padding:10px;display:flex;flex-direction:column;gap:10px}
 .circle.in{background:#27ae60}
 .circle.out{background:#e74c3c}
 .tiny{font-size:12px;color:var(--muted)}
-footer{padding:12px;text-align:center;color:var(--muted)}
+.footer{padding:12px;text-align:center;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:50}
-.modal{width:100%;max-width:520px;background:#fff;border-radius:12px;padding:16px}
-input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);margin-top:4px}
-.actions{display:flex;gap:8px;justify-content:flex-end}
+.modal{width:100%;max-width:520px;background:#fff;border-radius:12px;padding:16px;box-sizing:border-box}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);margin-top:4px;box-sizing:border-box}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .btn{padding:10px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
 .btn.ghost{background:transparent;color:#555;border:1px solid rgba(0,0,0,0.2)}
-.tx img{max-width:80px;margin-top:4px;border-radius:6px;}
+.tx img{max-width:80px;margin-top:4px;border-radius:6px;display:block}
 canvas{max-width:100%; margin-top:10px;}
+.small{font-size:12px;color:var(--muted)}
 </style>
 
 <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
@@ -52,52 +55,472 @@ canvas{max-width:100%; margin-top:10px;}
 </head>
 <body>
 <div class="app">
-<header>
-  <h1>Faith Ministry of Christ – Finance</h1>
-  <div style="margin-left:auto" class="tiny">Balance: <strong id="headerBalance">0</strong></div>
-</header>
+  <header>
+    <h1>Faith Ministry of Christ – Finance</h1>
+    <div class="header-actions">
+      <div class="small">Balance: <strong id="headerBalance">0</strong></div>
+      <a href="https://fmcsl.org" target="_blank" rel="noopener">Visit FMC</a>
+    </div>
+  </header>
 
-<div class="tabs panel">
-  <button class="active" data-filter="all">All</button>
-  <button data-filter="daily">Daily</button>
-  <button data-filter="weekly">Weekly</button>
-  <button data-filter="monthly">Monthly</button>
-  <button data-filter="yearly">Yearly</button>
+  <div class="tabs panel">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="daily">Daily</button>
+    <button data-filter="weekly">Weekly</button>
+    <button data-filter="monthly">Monthly</button>
+    <button data-filter="yearly">Yearly</button>
+  </div>
+
+  <main>
+    <section class="panel summary">
+      <div class="tile in">
+        <h3>Total Church Income</h3>
+        <div class="amt" id="totalIn">0</div>
+      </div>
+      <div class="tile out">
+        <h3>Total Church Expenses</h3>
+        <div class="amt" id="totalOut">0</div>
+      </div>
+      <div class="tile">
+        <h3>Balance</h3>
+        <div class="amt" id="balance">0</div>
+      </div>
+    </section>
+
+    <section class="panel controls">
+      <button class="action cash-in" id="openIn">Add Income</button>
+      <button class="action cash-out" id="openOut">Add Expense</button>
+      <button class="btn ghost" id="exportCsv">Export CSV</button>
+      <button class="btn ghost" id="exportPdf">Export PDF</button>
+      <button class="btn ghost" id="sharePdf">Share PDF</button>
+    </section>
+
+    <section class="panel list" id="listPanel"></section>
+
+    <section class="panel">
+      <canvas id="categoryChart" height="150"></canvas>
+    </section>
+  </main>
+
+  <div class="footer panel">
+    <div>Faith Ministry of Christ – Church Finance Management</div>
+    <div class="small">Made for FMC • <a href="https://fmcsl.org" target="_blank" rel="noopener">fmcsl.org</a></div>
+  </div>
 </div>
 
-<main>
-<section class="panel summary">
-  <div class="tile in">
-    <h3>Total Church Income</h3>
-    <div class="amt" id="totalIn">0</div>
-  </div>
-  <div class="tile out">
-    <h3>Total Church Expenses</h3>
-    <div class="amt" id="totalOut">0</div>
-  </div>
-  <div class="tile">
-    <h3>Balance</h3>
-    <div class="amt" id="balance">0</div>
-  </div>
-</section>
+<!-- Entry Modal -->
+<div class="modal-back" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Add Entry</h2>
 
-<section class="panel controls">
-  <button class="action cash-in" id="openIn">Add Income</button>
-  <button class="action cash-out" id="openOut">Add Expense</button>
-  <button class="btn ghost" id="exportCsv">Export CSV</button>
-  <button class="btn ghost" id="exportPdf">Export PDF</button>
-  <button class="btn ghost" id="sharePdf">Share PDF</button>
-</section>
+    <label>Title</label>
+    <input id="title" placeholder="e.g. Sunday Tithe">
 
-<section class="panel list" id="listPanel"></section>
-<section class="panel">
-  <canvas id="categoryChart" height="150"></canvas>
-</section>
-</main>
+    <label>Amount (LKR)</label>
+    <input id="amount" type="number" placeholder="1000">
 
-<footer>Faith Ministry of Christ – Church Finance Management</footer>
+    <label>Category</label>
+    <select id="category">
+      <option value="Tithe">Tithe</option>
+      <option value="Offering">Offering</option>
+      <option value="Donation">Donation</option>
+      <option value="Church Bill">Church Bill</option>
+      <option value="Mission Work">Mission Work</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label>Date</label>
+    <input id="date" type="date">
+
+    <label>Attach Photo</label>
+    <input id="photo" type="file" accept="image/*">
+
+    <input type="hidden" id="type">
+
+    <div class="actions">
+      <button class="btn ghost" id="cancel">Cancel</button>
+      <button class="btn" id="save">Save</button>
+    </div>
+  </div>
 </div>
 
-<!-- Modal and scripts would continue with full logic as provided previously -->
+<!-- PDF Preview Modal -->
+<div class="modal-back" id="pdfPreviewModal">
+  <div class="modal" style="max-width:90%;height:90%;overflow:auto">
+    <h2>PDF Preview</h2>
+    <iframe id="pdfIframe" style="width:100%;height:80%;border:none"></iframe>
+    <div class="actions">
+      <button class="btn ghost" id="closePreview">Close</button>
+      <button class="btn" id="downloadPreview">Download PDF</button>
+      <button class="btn" id="sharePreview">Share PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Configuration: replace if you want your own Parse keys ----------
+Parse.initialize("Z9iOJiW9TlRGS1mkA1ISjaoGrOaAEJkxznaFqVmS", "LamyszGBxwZ0xmLYuNXlf6TaqNTRcc7GHxpRf7do");
+Parse.serverURL = 'https://parseapi.back4app.com/';
+// ------------------------------------------------------------------------
+
+const Finance = Parse.Object.extend("Finance");
+let tx = [];
+let activeFilter = "all";
+let categoryChart;
+let lastGeneratedPdfBlob = null; // keep last generated PDF blob for share/download
+
+// set default date to today
+document.addEventListener("DOMContentLoaded", () => {
+  const d = new Date();
+  const iso = d.toISOString().split('T')[0];
+  document.getElementById("date").value = iso;
+});
+
+// Load data from Parse
+async function load() {
+  const query = new Parse.Query(Finance);
+  query.ascending("createdAt");
+  try {
+    const results = await query.find();
+    tx = results.map(r=>({
+      id: r.id,
+      title: r.get("title"),
+      amount: Number(r.get("amount") || 0),
+      type: r.get("type"),
+      category: r.get("category"),
+      date: r.get("date"),
+      photo: r.get("photo") ? r.get("photo").url() : null
+    }));
+    render();
+  } catch(e){
+    console.error("Load error:", e);
+    // If parse fails (offline/testing), keep tx as empty array
+    render();
+  }
+}
+
+function money(n){ return Number(n).toLocaleString(); }
+
+function filterTx(filter){
+  const now = new Date();
+  return tx.filter(t => {
+    const d = new Date(t.date);
+    switch(filter){
+      case "daily": return d.toDateString()===now.toDateString();
+      case "weekly": {
+        const oneJan = new Date(now.getFullYear(),0,1);
+        const currentWeek = Math.ceil((((now - oneJan)/86400000)+oneJan.getDay()+1)/7);
+        const txWeek = Math.ceil((((d - oneJan)/86400000)+oneJan.getDay()+1)/7);
+        return now.getFullYear()===d.getFullYear() && currentWeek===txWeek;
+      }
+      case "monthly": return now.getFullYear()===d.getFullYear() && now.getMonth()===d.getMonth();
+      case "yearly": return now.getFullYear()===d.getFullYear();
+      default: return true;
+    }
+  });
+}
+
+function render(filter=activeFilter){
+  const filteredTx = filterTx(filter);
+
+  const totalIn = filteredTx.filter(t=>t.type==="in").reduce((a,b)=>a+Number(b.amount),0);
+  const totalOut = filteredTx.filter(t=>t.type==="out").reduce((a,b)=>a+Number(b.amount),0);
+  const bal = totalIn-totalOut;
+
+  document.getElementById("totalIn").textContent = money(totalIn);
+  document.getElementById("totalOut").textContent = money(totalOut);
+  document.getElementById("balance").textContent = money(bal);
+  document.getElementById("headerBalance").textContent = money(bal);
+
+  const list = document.getElementById("listPanel");
+  list.innerHTML="";
+  if(filteredTx.length===0){
+    list.innerHTML = '<div class="small">No transactions yet. Add income or expense.</div>';
+  } else {
+    filteredTx.slice().reverse().forEach(t=>{
+      const d = document.createElement("div");
+      d.className = "tx";
+      d.innerHTML = `
+        <div style="margin-right:8px">
+          <div class="circle ${t.type==="in"?"in":"out"}">${t.type==="in"?"+":"-"}</div>
+        </div>
+        <div style="flex:1;margin-right:8px">
+          <div><strong>${escapeHtml(t.title || '')}</strong></div>
+          <div class="tiny">${new Date(t.date).toLocaleString()}</div>
+          <div class="tiny">${escapeHtml(t.category || '')}</div>
+          ${t.photo ? `<img src="${t.photo}" alt="photo">` : ""}
+        </div>
+        <div style="text-align:right;min-width:110px">
+          <strong>${t.type==="in"?"+":"-"} ${money(t.amount)}</strong>
+        </div>
+      `;
+      list.appendChild(d);
+    });
+  }
+
+  updateChart(filter);
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m])); }
+
+document.querySelectorAll(".tabs button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter = btn.dataset.filter;
+    render(activeFilter);
+  });
+});
+
+function openModal(type){
+  document.getElementById("type").value=type;
+  document.getElementById("modalTitle").textContent=type==="in"?"Add Church Income":"Add Church Expense";
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+
+document.getElementById("openIn").onclick=()=>openModal("in");
+document.getElementById("openOut").onclick=()=>openModal("out");
+document.getElementById("cancel").onclick=()=>closeModal();
+
+async function saveEntry(entry){
+  const obj = new Finance();
+  obj.set("title", entry.title);
+  obj.set("amount", entry.amount);
+  obj.set("type", entry.type);
+  obj.set("category", entry.category);
+  obj.set("date", entry.date);
+
+  const fileInput = document.getElementById("photo");
+  if(fileInput && fileInput.files.length>0){
+    const file = fileInput.files[0];
+    try {
+      const parseFile = new Parse.File(file.name, file);
+      await parseFile.save();
+      obj.set("photo", parseFile);
+    } catch(e){
+      console.warn("File upload to Parse failed - using local only:", e);
+    }
+  }
+
+  try{
+    const saved = await obj.save();
+    const savedPhoto = saved.get("photo") ? saved.get("photo").url() : (entry.photo || null);
+    const record = {
+      id: saved.id,
+      title: entry.title,
+      amount: Number(entry.amount),
+      type: entry.type,
+      category: entry.category,
+      date: entry.date,
+      photo: savedPhoto
+    };
+    tx.push(record);
+    render(activeFilter);
+  } catch(e){
+    console.error("Save failed:", e);
+    // if save to Parse fails, keep locally
+    entry.id = 'local_' + Date.now();
+    tx.push(entry);
+    render(activeFilter);
+  }
+}
+
+document.getElementById("save").onclick=()=>{
+  const title = document.getElementById("title").value || "(No title)";
+  const amount = Number(document.getElementById("amount").value || 0);
+  const category = document.getElementById("category").value;
+  const type = document.getElementById("type").value;
+  const dateVal = document.getElementById("date").value;
+  const dateIso = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+
+  const entry = { title, amount, category, type, date: dateIso };
+  saveEntry(entry);
+  closeModal();
+};
+
+// CSV Export
+document.getElementById("exportCsv").onclick = () => {
+  const lines=[["Title","Amount","Type","Category","Date","Photo URL"]];
+  getFilteredTx().forEach(t=>lines.push([escapeCsv(t.title), t.amount, t.type, escapeCsv(t.category), t.date, t.photo||""]));
+  const csv = lines.map(r=>r.join(",")).join("\n");
+  const blob = new Blob([csv],{type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="church_finance.csv"; a.click();
+};
+function escapeCsv(v){ return `"${String(v).replace(/"/g,'""')}"`; }
+
+function getFilteredTx(){ return filterTx(activeFilter); }
+
+// helper to load image for PDF
+function loadImage(url) {
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = ()=>resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// Create PDF (returns jspdf instance and blob)
+async function createPdfBlob(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  pdf.setFontSize(16);
+  pdf.text("Faith Ministry of Christ",14,15);
+  pdf.setFontSize(12);
+  pdf.text(`Church Financial Summary (${activeFilter})`,14,22);
+
+  let y = 30;
+  try {
+    const chartCanvas = document.getElementById("categoryChart");
+    if(chartCanvas){
+      const chartImg = chartCanvas.toDataURL("image/png");
+      // fit chart width to page (approx 180mm wide)
+      pdf.addImage(chartImg, 'PNG', 14, y, 180, 60);
+      y += 65;
+    }
+  } catch(e){ console.error("chart capture failed",e); }
+
+  for(let t of getFilteredTx()){
+    const line = `${t.title} | ${t.amount} | ${t.type} | ${t.category} | ${new Date(t.date).toLocaleString()}`;
+    pdf.setFontSize(10);
+    pdf.text(line,14,y);
+    y += 6;
+    if(t.photo){
+      try{
+        const img = await loadImage(t.photo);
+        // maintain ratio to fit width 50mm
+        const ratio = img.width / img.height;
+        const imgWidth = 50;
+        const imgHeight = imgWidth / ratio;
+        if(y + imgHeight > 280){ pdf.addPage(); y = 20; }
+        // convert to canvas to get dataURI type if needed
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img,0,0);
+        const dataUrl = c.toDataURL('image/jpeg', 0.9);
+        pdf.addImage(dataUrl,'JPEG',14,y,imgWidth,imgHeight);
+        y += imgHeight + 6;
+      }catch(e){ console.warn("attach image to pdf failed", e); }
+    }
+    if(y>270){ pdf.addPage(); y=20; }
+  }
+
+  const blob = pdf.output('blob');
+  lastGeneratedPdfBlob = blob;
+  return { pdf, blob };
+}
+
+// Show PDF preview and wire buttons to appropriate actions:
+async function showPdfPreview(){
+  const { pdf, blob } = await createPdfBlob();
+  const url = URL.createObjectURL(blob);
+  document.getElementById("pdfIframe").src = url;
+  document.getElementById("pdfPreviewModal").style.display = "flex";
+
+  document.getElementById("downloadPreview").onclick = ()=>{
+    // Save via jsPDF (this prompts download)
+    try{ pdf.save("church_finance.pdf"); }catch(e){
+      // fallback
+      const a = document.createElement('a');
+      a.href = url; a.download = "church_finance.pdf"; a.click();
+    }
+  };
+
+  document.getElementById("sharePreview").onclick = async ()=>{
+    await sharePdfBlob(blob);
+  };
+}
+
+document.getElementById("exportPdf").onclick = showPdfPreview;
+document.getElementById("sharePdf").onclick = async ()=>{
+  // create pdf and attempt share directly (without preview)
+  const { blob } = await createPdfBlob();
+  await sharePdfBlob(blob);
+};
+document.getElementById("closePreview").onclick = ()=>document.getElementById("pdfPreviewModal").style.display="none";
+
+// Robust share helper (tries navigator.share, then open blob URL, then download)
+async function sharePdfBlob(blob){
+  const file = new File([blob], "church_finance.pdf", { type: "application/pdf" });
+  // 1) Try native share for modern browsers
+  try{
+    if(navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Church Finance PDF',
+        text: 'Faith Ministry of Christ Financial Report'
+      });
+      return;
+    }
+  }catch(e){
+    console.warn("navigator.share failed:", e);
+  }
+
+  // 2) Try to open blob URL in a new window - AppCreator24 WebView often hands off to external PDF viewer
+  try{
+    const url = URL.createObjectURL(blob);
+    // Attempt to open in new window/tab - WebView may trigger external app to open file
+    const newWin = window.open(url, '_blank');
+    if(newWin){
+      // some WebViews block immediate focus; URL should still be handed off to system
+      return;
+    }
+    // If window.open returns null, try location change (last resort)
+    window.location.href = url;
+    return;
+  }catch(e){
+    console.warn("open blob failed:", e);
+  }
+
+  // 3) Fallback: force download using jsPDF if we have it; otherwise create anchor
+  try{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "church_finance.pdf";
+    a.click();
+  }catch(e){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "church_finance.pdf";
+    a.click();
+  }
+}
+
+// Chart
+function updateChart(filter=activeFilter){
+  const filteredTx = filterTx(filter);
+  const categories = [...new Set(filteredTx.map(t=>t.category))];
+  // ensure categories exist to avoid ChartJS problems
+  const labels = categories.length ? categories : ['No Data'];
+  const incomeData = labels.map(cat =>
+    filteredTx.filter(t=>t.type==="in" && t.category===cat).reduce((a,b)=>a+Number(b.amount),0)
+  );
+  const expenseData = labels.map(cat =>
+    filteredTx.filter(t=>t.type==="out" && t.category===cat).reduce((a,b)=>a+Number(b.amount),0)
+  );
+
+  const data = {
+    labels: labels,
+    datasets: [
+      { label: 'Income', data: incomeData, backgroundColor: 'rgba(39, 174, 96,0.6)' },
+      { label: 'Expense', data: expenseData, backgroundColor: 'rgba(231, 76, 60,0.6)' }
+    ]
+  };
+
+  if(categoryChart) categoryChart.destroy();
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  categoryChart = new Chart(ctx, { type: 'bar', data: data, options: { responsive: true, plugins:{legend: { position: 'top' } } } });
+}
+
+// Initialize
+load();
+</script>
 </body>
 </html>
